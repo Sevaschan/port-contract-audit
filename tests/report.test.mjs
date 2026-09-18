@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {validateReport} from '../scripts/validate-report.mjs';
+const sample=()=>JSON.parse(readFileSync(new URL('../examples/expected-report.json',import.meta.url)));
+test('complete incompatible report is accepted',()=>assert.equal(validateReport(sample()).verdict.status,'incompatible'));
+test('cannot claim consistency while mismatches remain',()=>{const r=sample();r.verdict.status='consistent-with-reviewed-evidence';assert.throws(()=>validateReport(r),/verdict/);});
+test('stale candidate cannot support a confirmed match',()=>{const r=sample();r.checks[0].evidenceIds=['C1','O1','N5'];assert.throws(()=>validateReport(r),/current candidate/);});
+test('candidate-generated tests cannot substitute for an independent oracle',()=>{const r=sample();r.checks[0].evidenceIds=['T4','N1'];assert.throws(()=>validateReport(r),/oracle/);});
+test('approval IDs must identify approval evidence',()=>{const r=sample();r.checks[0].status='approved-change';r.checks[0].approvalIds=['A2'];assert.throws(()=>validateReport(r),/approval/);});
+test('approval links do not turn a mismatch into an approved change',()=>{const r=sample();r.checks[0].approvalIds=['A1'];assert.throws(()=>validateReport(r),/approvalIds/);});
+test('unknown checks and risks prevent a blanket parity verdict',()=>{const r=sample();r.checks=r.checks.slice(-1);r.nextTests=[];r.verdict.status='consistent-with-reviewed-evidence';assert.throws(()=>validateReport(r),/verdict/);});
+test('unknown report can be valid with missing baseline',()=>{const r=sample();r.scope.baseline=null;r.checks=r.checks.slice(-1);r.nextTests=[];r.verdict.status='unverified';assert.equal(validateReport(r).verdict.status,'unverified');});
+test('declared analysis-only reports cannot claim executed commands',()=>{const r=sample();r.execution.commands=['cargo test'];assert.throws(()=>validateReport(r),/analysis-only/);});
+test('duplicate evidence and dangling test references are rejected',()=>{const r=sample();r.evidence.push(r.evidence[0]);assert.throws(()=>validateReport(r),/Duplicate/);const b=sample();b.nextTests[0].checkIds=['absent'];assert.throws(()=>validateReport(b),/Unknown check/);});
+test('scoped approved delta and exact matches have distinct verdicts',()=>{const r=sample();r.checks=[{...r.checks[0],status:'approved-change',approvalIds:['A1']}];r.oracleRisks=[];r.nextTests=[];r.verdict.status='intentional-delta';assert.equal(validateReport(r).verdict.status,'intentional-delta');r.checks[0].status='match';r.checks[0].approvalIds=[];r.verdict.status='consistent-with-reviewed-evidence';assert.equal(validateReport(r).verdict.status,'consistent-with-reviewed-evidence');});
+test('unknown fields are rejected',()=>{const r=sample();r.approved=true;assert.throws(()=>validateReport(r),/unknown field/);});
