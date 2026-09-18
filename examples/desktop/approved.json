@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "kind": "port-contract-audit",
+  "scope": {
+    "baseline": "a17",
+    "candidate": "b28",
+    "surfaces": [
+      "diagnostic debugLabel JSON serialization",
+      "per-request request/call event trace ordering"
+    ],
+    "excluded": [
+      "other JSON fields",
+      "timeouts",
+      "memory/FFI",
+      "persistent data",
+      "unobserved platforms"
+    ]
+  },
+  "execution": {
+    "mode": "analysis-only",
+    "commands": []
+  },
+  "evidence": [
+    {
+      "id": "C1",
+      "kind": "contract",
+      "source": "port-approved-change.md C1",
+      "snapshot": "a17",
+      "summary": "The baseline contract omits absent diagnostic debugLabel from JSON."
+    },
+    {
+      "id": "C2",
+      "kind": "contract",
+      "source": "port-approved-change.md C2",
+      "snapshot": "a17",
+      "summary": "Emitted request/call pairs each have one result before that request's done; cross-request interleaving is not specified."
+    },
+    {
+      "id": "A1",
+      "kind": "approval",
+      "source": "port-approved-change.md A1",
+      "snapshot": null,
+      "summary": "Approved ticket UX-42 explicitly changes only absent debugLabel to serialized null in b28."
+    },
+    {
+      "id": "O1",
+      "kind": "baseline-observation",
+      "source": "port-approved-change.md O1",
+      "snapshot": "a17",
+      "summary": "Baseline absent-debug fixture response is {}."
+    },
+    {
+      "id": "N1",
+      "kind": "candidate-observation",
+      "source": "port-approved-change.md N1",
+      "snapshot": "b28",
+      "summary": "Candidate absent-debug fixture response is {\"debugLabel\":null}."
+    },
+    {
+      "id": "O2",
+      "kind": "baseline-observation",
+      "source": "port-approved-change.md O2",
+      "snapshot": "a17",
+      "summary": "Baseline two-request trace has r1/c1 call, r2/c2 call, r1/c1 result, r1 done, r2/c2 result, r2 done."
+    },
+    {
+      "id": "N2",
+      "kind": "candidate-observation",
+      "source": "port-approved-change.md N2",
+      "snapshot": "b28",
+      "summary": "Candidate two-request trace has r2/c2 call, r1/c1 call, r2/c2 result, r2 done, r1/c1 result, r1 done."
+    },
+    {
+      "id": "S1",
+      "kind": "comment",
+      "source": "port-approved-change.md Scope statement",
+      "snapshot": null,
+      "summary": "The supplied scope is only debugLabel and the listed per-request traces; no test-oracle changes or performance results are claimed."
+    }
+  ],
+  "checks": [
+    {
+      "id": "CHK-debugLabel-absent",
+      "surface": "diagnostic debugLabel JSON serialization",
+      "contract": "At baseline, absent diagnostic debugLabel is omitted from JSON; UX-42 explicitly changes only this absent debugLabel behavior to serialize null in b28.",
+      "baseline": "Contract C1 and observation O1 establish response {} for absent-debug at a17.",
+      "candidate": "Observation N1 establishes b28 response {\"debugLabel\":null}; approval A1 applies exactly to absent debugLabel serialization.",
+      "status": "approved-change",
+      "evidenceIds": ["C1", "A1", "O1", "N1"],
+      "approvalIds": ["A1"]
+    },
+    {
+      "id": "CHK-per-request-trace",
+      "surface": "per-request request/call event trace ordering",
+      "contract": "For each request/call pair, one result must occur before that request's done; cross-request interleaving is not specified.",
+      "baseline": "Observation O2 shows r1/c1 result before r1 done and r2/c2 result before r2 done.",
+      "candidate": "Observation N2 also shows r2/c2 result before r2 done and r1/c1 result before r1 done; the changed cross-request interleaving is outside the specified order.",
+      "status": "match",
+      "evidenceIds": ["C2", "O2", "N2"],
+      "approvalIds": []
+    }
+  ],
+  "oracleRisks": [],
+  "nextTests": [
+    {
+      "id": "NEXT-debugLabel-scope",
+      "checkIds": ["CHK-debugLabel-absent"],
+      "action": "Add scoped regression coverage that only absent diagnostic debugLabel serializes as null and no other absent JSON fields are normalized under UX-42.",
+      "command": null,
+      "expected": "Absent debugLabel yields {\"debugLabel\":null}; unrelated absent fields continue to follow their own baseline contracts."
+    },
+    {
+      "id": "NEXT-trace-multiplicity",
+      "checkIds": ["CHK-per-request-trace"],
+      "action": "Exercise multiple concurrent requests with distinct call IDs and verify one result per emitted call before each request's done while allowing cross-request interleaving.",
+      "command": null,
+      "expected": "Each emitted request/call pair has exactly one matching result before that request's done, with no global ordering requirement between independent requests."
+    }
+  ],
+  "verdict": {
+    "status": "intentional-delta",
+    "reason": "The only observed behavior change is absent debugLabel serialization from omission to null, and that change has a scoped approval. The supplied per-request traces match the specified per-request result-before-done contract despite different cross-request interleaving. This scoped review is not release approval."
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "kind": "port-contract-audit",
+  "scope": {
+    "baseline": "ts-old",
+    "candidate": "rs-new",
+    "surfaces": [
+      "timeout JSON behavior",
+      "candidate suite parity claim",
+      "performance claim"
+    ],
+    "excluded": [
+      "old implementation behavior",
+      "baseline contracts",
+      "old fixtures",
+      "baseline observations",
+      "approved product changes",
+      "reproducible benchmark workload"
+    ]
+  },
+  "execution": {
+    "mode": "analysis-only",
+    "commands": []
+  },
+  "evidence": [
+    {
+      "id": "T1",
+      "kind": "test-report",
+      "source": "port-missing-oracle.md T1",
+      "snapshot": "rs-new",
+      "summary": "Candidate suite report says 90 tests passed, with expectations regenerated from rs-new."
+    },
+    {
+      "id": "N1",
+      "kind": "candidate-observation",
+      "source": "port-missing-oracle.md N1",
+      "snapshot": "rs-new",
+      "summary": "Candidate-only capture says request {} produced {\"timeout\":null}."
+    },
+    {
+      "id": "P1",
+      "kind": "performance",
+      "source": "port-missing-oracle.md P1",
+      "snapshot": "rs-new",
+      "summary": "Performance claim says the candidate is twice as fast but omits machine and workload details."
+    },
+    {
+      "id": "G1",
+      "kind": "comment",
+      "source": "port-missing-oracle.md Evidence gap statement",
+      "snapshot": null,
+      "summary": "No old implementation, contract, old fixture, baseline observations, approvals or reproducible benchmark are provided."
+    }
+  ],
+  "checks": [
+    {
+      "id": "CHK-timeout-json",
+      "surface": "timeout JSON behavior",
+      "contract": "No baseline contract or baseline observation is supplied for request {} timeout serialization or semantics.",
+      "baseline": null,
+      "candidate": "Candidate-only observation N1 reports {\"timeout\":null} for request {} at rs-new.",
+      "status": "unknown",
+      "evidenceIds": ["N1", "G1"],
+      "approvalIds": []
+    },
+    {
+      "id": "CHK-suite-parity",
+      "surface": "candidate suite parity claim",
+      "contract": "Parity requires an independent baseline oracle, such as an old contract, old fixture, baseline observation or unchanged expected output.",
+      "baseline": null,
+      "candidate": "The rs-new suite passed 90 tests, but expectations were regenerated from rs-new and therefore do not establish old-versus-new behavior preservation.",
+      "status": "unknown",
+      "evidenceIds": ["T1", "G1"],
+      "approvalIds": []
+    },
+    {
+      "id": "CHK-performance-claim",
+      "surface": "performance claim",
+      "contract": "No reproducible benchmark workload, machine details or baseline measurement are supplied for the claimed speedup.",
+      "baseline": null,
+      "candidate": "P1 is a candidate-side performance claim only and does not provide enough conditions to compare or reproduce the result.",
+      "status": "unknown",
+      "evidenceIds": ["P1", "G1"],
+      "approvalIds": []
+    }
+  ],
+  "oracleRisks": [
+    {
+      "id": "RISK-regenerated-expectations",
+      "evidenceIds": ["T1"],
+      "reason": "The reported passing suite regenerated expectations from the candidate, so it is not an independent oracle for migration parity."
+    }
+  ],
+  "nextTests": [
+    {
+      "id": "NEXT-timeout-oracle",
+      "checkIds": ["CHK-timeout-json"],
+      "action": "Provide the ts-old timeout contract or a captured ts-old run for request {} under specified session/default conditions, then run or capture rs-new under the same conditions.",
+      "command": null,
+      "expected": "The candidate timeout output can be classified only by comparing rs-new {\"timeout\":null} against an independent ts-old contract or observation."
+    },
+    {
+      "id": "NEXT-independent-suite",
+      "checkIds": ["CHK-suite-parity"],
+      "action": "Restore expected outputs from ts-old or generate expected values from a baseline oracle rather than rs-new, then compare unchanged fixtures against rs-new.",
+      "command": null,
+      "expected": "A passing result should mean rs-new matches baseline-defined outputs; mismatches remain visible instead of being absorbed into regenerated expectations."
+    },
+    {
+      "id": "NEXT-reproducible-performance",
+      "checkIds": ["CHK-performance-claim"],
+      "action": "Define the benchmark workload, machine/environment, sample size and baseline measurement before using performance as a bounded observation.",
+      "command": null,
+      "expected": "A performance comparison states the same workload and environment for ts-old and rs-new and reports reproducible measurements; it remains separate from correctness parity."
+    }
+  ],
+  "verdict": {
+    "status": "unverified",
+    "reason": "The packet contains only candidate-side evidence, regenerated expectations and an unreproducible performance claim. With no independent baseline oracle or scoped approval, parity for the reviewed surfaces remains unknown."
+  }
+}

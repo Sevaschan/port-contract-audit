@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "kind": "port-contract-audit",
+  "scope": {
+    "baseline": "adapter-ts@a17",
+    "candidate": "adapter-rs@b28",
+    "surfaces": [
+      "JSON adapter timeout semantics",
+      "tool_call/tool_result event protocol",
+      "list result ordering and multiplicity",
+      "missing-record error response",
+      "invalid-config behavior"
+    ],
+    "excluded": [
+      "authentication",
+      "persistence",
+      "real tools",
+      "other platforms",
+      "FFI memory ownership",
+      "tests unavailable outside the supplied packet"
+    ]
+  },
+  "execution": {
+    "mode": "analysis-only",
+    "commands": []
+  },
+  "evidence": [
+    {
+      "id": "C1",
+      "kind": "contract",
+      "source": "port-port-packet.md Contract evidence C1",
+      "snapshot": "api-contract@a17",
+      "summary": "An omitted optional request timeout inherits the session default; explicit null disables the timeout; consumers distinguish omitted fields from null."
+    },
+    {
+      "id": "C2",
+      "kind": "contract",
+      "source": "port-port-packet.md Contract evidence C2",
+      "snapshot": "event-protocol@a17",
+      "summary": "Every emitted tool_call must have exactly one later tool_result with matching request and call IDs, including cancellation; no result is emitted for a never-emitted call; each request has exactly one done after all its tool results; no global order between different requests is implied."
+    },
+    {
+      "id": "C3",
+      "kind": "contract",
+      "source": "port-port-packet.md Contract evidence C3",
+      "snapshot": "iterator-fixture@a17",
+      "summary": "List output preserves insertion order and duplicate items are meaningful and must be preserved."
+    },
+    {
+      "id": "C4",
+      "kind": "contract",
+      "source": "port-port-packet.md Contract evidence C4",
+      "snapshot": "behavior-note@a17",
+      "summary": "A missing record returns a structured NOT_FOUND error rather than success with null."
+    },
+    {
+      "id": "O1",
+      "kind": "baseline-observation",
+      "source": "port-port-packet.md Captured observations O1",
+      "snapshot": "adapter-ts@a17",
+      "summary": "Oracle run for fixture timeout-omitted with request {} and session default 1200 produced effectiveTimeoutMs=1200."
+    },
+    {
+      "id": "N1",
+      "kind": "candidate-observation",
+      "source": "port-port-packet.md Captured observations N1",
+      "snapshot": "adapter-rs@b28",
+      "summary": "Candidate run for the same timeout-omitted fixture and session default 1200 produced effectiveTimeoutMs=null."
+    },
+    {
+      "id": "O2",
+      "kind": "baseline-observation",
+      "source": "port-port-packet.md Captured observations O2",
+      "snapshot": "adapter-ts@a17",
+      "summary": "Oracle cancel-one trace emitted r1/t1 tool_call, then r1/t1 tool_result with error CANCELLED, then done."
+    },
+    {
+      "id": "N2",
+      "kind": "candidate-observation",
+      "source": "port-port-packet.md Captured observations N2",
+      "snapshot": "adapter-rs@b28",
+      "summary": "Candidate cancel-one trace emitted r1/t1 tool_call followed by done, with no tool_result for the emitted cancelled call."
+    },
+    {
+      "id": "O3",
+      "kind": "baseline-observation",
+      "source": "port-port-packet.md Captured observations O3",
+      "snapshot": "adapter-ts@a17",
+      "summary": "Oracle list-repeat result was [\"oak\",\"pine\",\"oak\"]."
+    },
+    {
+      "id": "N3",
+      "kind": "candidate-observation",
+      "source": "port-port-packet.md Captured observations N3",
+      "snapshot": "adapter-rs@b28",
+      "summary": "Candidate list-repeat result was [\"pine\",\"oak\"]."
+    },
+    {
+      "id": "O4",
+      "kind": "baseline-observation",
+      "source": "port-port-packet.md Captured observations O4",
+      "snapshot": "adapter-ts@a17",
+      "summary": "Oracle missing-record fixture returned error {code:\"NOT_FOUND\",id:\"x\"}."
+    },
+    {
+      "id": "N4",
+      "kind": "candidate-observation",
+      "source": "port-port-packet.md Captured observations N4",
+      "snapshot": "adapter-rs@b28",
+      "summary": "Candidate missing-record fixture returned success {value:null}."
+    },
+    {
+      "id": "N5",
+      "kind": "candidate-observation",
+      "source": "port-port-packet.md Captured observations N5",
+      "snapshot": "adapter-rs@b27",
+      "summary": "Older candidate b27 invalid-config fixture exited with code 0; no b28 observation and no old behavior or config contract is supplied."
+    },
+    {
+      "id": "T1",
+      "kind": "test-report",
+      "source": "port-port-packet.md Candidate test report T1",
+      "snapshot": "adapter-rs@b28",
+      "summary": "The candidate suite passed 420/420, but both implementation and expected snapshots were modified during migration."
+    },
+    {
+      "id": "T2",
+      "kind": "test-report",
+      "source": "port-port-packet.md Candidate test report T2",
+      "snapshot": "adapter-rs@b28",
+      "summary": "The b28 helper compares list outputs after sort(unique(values)) and labels O3/N3 equal, masking order and duplicate differences."
+    },
+    {
+      "id": "T3",
+      "kind": "test-report",
+      "source": "port-port-packet.md Candidate test report T3",
+      "snapshot": "adapter-rs@b28",
+      "summary": "The b28 helper drops tool_result events containing errors before comparing request traces, masking cancellation-result differences."
+    },
+    {
+      "id": "T4",
+      "kind": "test-report",
+      "source": "port-port-packet.md Candidate test report T4",
+      "snapshot": "adapter-rs@b28",
+      "summary": "Timeout-omitted tests were regenerated from Rust output with no assertion against the old fixture."
+    },
+    {
+      "id": "P1",
+      "kind": "performance",
+      "source": "port-port-packet.md Candidate test report P1",
+      "snapshot": null,
+      "summary": "Performance smoke reported median request time a17=85 ms and b28=31 ms for a synthetic happy path of 50 requests on the same machine; cancellation cases were not timed."
+    },
+    {
+      "id": "A1",
+      "kind": "approval",
+      "source": "port-port-packet.md Change approvals A1",
+      "snapshot": null,
+      "summary": "Maintainer-approved ticket UX-42 changes omitted diagnostic debugLabel to serialize as null; scope is only debugLabel, not timeout or result values."
+    },
+    {
+      "id": "A2",
+      "kind": "comment",
+      "source": "port-port-packet.md Change approvals A2",
+      "snapshot": null,
+      "summary": "Reviewer comment says Rust APIs usually return Option so returning null seems idiomatic; no product change approval is attached."
+    }
+  ],
+  "checks": [
+    {
+      "id": "CHK-timeout-omitted",
+      "surface": "JSON adapter timeout semantics",
+      "contract": "An omitted optional request timeout must inherit the session default; explicit null is the value that disables timeout.",
+      "baseline": "Contract C1 and a17 observation O1 establish that request {} with session default 1200 yields effectiveTimeoutMs=1200.",
+      "candidate": "b28 observation N1 for the same fixture yields effectiveTimeoutMs=null, treating omission like timeout disabling.",
+      "status": "mismatch",
+      "evidenceIds": ["C1", "O1", "N1", "A1"],
+      "approvalIds": []
+    },
+    {
+      "id": "CHK-cancel-result",
+      "surface": "tool_call/tool_result event protocol",
+      "contract": "Each emitted tool_call must have exactly one later matching tool_result before that request's done, including cancellation.",
+      "baseline": "Contract C2 and a17 observation O2 establish a CANCELLED tool_result for r1/t1 before done.",
+      "candidate": "b28 observation N2 emits r1/t1 tool_call then done without any matching tool_result.",
+      "status": "mismatch",
+      "evidenceIds": ["C2", "O2", "N2"],
+      "approvalIds": []
+    },
+    {
+      "id": "CHK-list-repeat",
+      "surface": "list result ordering and multiplicity",
+      "contract": "List output must preserve insertion order and meaningful duplicates.",
+      "baseline": "Contract C3 and a17 observation O3 establish [\"oak\",\"pine\",\"oak\"].",
+      "candidate": "b28 observation N3 returns [\"pine\",\"oak\"], changing order and removing a duplicate.",
+      "status": "mismatch",
+      "evidenceIds": ["C3", "O3", "N3"],
+      "approvalIds": []
+    },
+    {
+      "id": "CHK-missing-record",
+      "surface": "missing-record error response",
+      "contract": "A missing record returns structured NOT_FOUND error rather than success with null.",
+      "baseline": "Contract C4 and a17 observation O4 establish error {code:\"NOT_FOUND\",id:\"x\"}.",
+      "candidate": "b28 observation N4 returns success {value:null}.",
+      "status": "mismatch",
+      "evidenceIds": ["C4", "O4", "N4", "A2"],
+      "approvalIds": []
+    },
+    {
+      "id": "CHK-invalid-config",
+      "surface": "invalid-config behavior",
+      "contract": "No old behavior or config contract is supplied for invalid-config.",
+      "baseline": null,
+      "candidate": null,
+      "status": "unknown",
+      "evidenceIds": ["N5"],
+      "approvalIds": []
+    }
+  ],
+  "oracleRisks": [
+    {
+      "id": "RISK-regenerated-expected",
+      "evidenceIds": ["T1", "T4"],
+      "reason": "Expected snapshots and timeout tests were regenerated from candidate output, so the green suite is not an independent oracle for baseline compatibility."
+    },
+    {
+      "id": "RISK-list-normalization",
+      "evidenceIds": ["T2", "C3"],
+      "reason": "The list comparator sorts and deduplicates values even though the contract preserves order and duplicates."
+    },
+    {
+      "id": "RISK-dropped-error-results",
+      "evidenceIds": ["T3", "C2"],
+      "reason": "The trace comparator drops error tool_result events even though cancellation results are required protocol evidence."
+    }
+  ],
+  "nextTests": [
+    {
+      "id": "NEXT-timeout-omitted",
+      "checkIds": ["CHK-timeout-omitted"],
+      "action": "Add or restore an independent fixture asserting omitted timeout inherits the session default and explicit null disables timeout.",
+      "command": null,
+      "expected": "For request {} with session default 1200, b28 should report effectiveTimeoutMs=1200; for explicit null it should disable the timeout."
+    },
+    {
+      "id": "NEXT-cancel-result",
+      "checkIds": ["CHK-cancel-result"],
+      "action": "Compare cancellation traces without dropping error tool_result events, correlated by requestId and callId.",
+      "command": null,
+      "expected": "Every emitted cancelled call has exactly one later matching CANCELLED tool_result before the request done event."
+    },
+    {
+      "id": "NEXT-list-repeat",
+      "checkIds": ["CHK-list-repeat"],
+      "action": "Replace sort(unique()) comparison with exact sequence comparison for list-repeat and other collection fixtures.",
+      "command": null,
+      "expected": "The candidate preserves [\"oak\",\"pine\",\"oak\"] exactly, including order and duplicate."
+    },
+    {
+      "id": "NEXT-missing-record",
+      "checkIds": ["CHK-missing-record"],
+      "action": "Assert missing-record returns the structured NOT_FOUND error shape instead of success with null unless a scoped product approval changes that behavior.",
+      "command": null,
+      "expected": "The candidate returns error {code:\"NOT_FOUND\",id:\"x\"} for the fixture."
+    },
+    {
+      "id": "NEXT-invalid-config",
+      "checkIds": ["CHK-invalid-config"],
+      "action": "Obtain the a17 contract or baseline observation and a current b28 observation for invalid-config under the same fixture.",
+      "command": null,
+      "expected": "Compatibility can be classified only after old behavior and current candidate behavior are both available."
+    }
+  ],
+  "verdict": {
+    "status": "incompatible",
+    "reason": "The reviewed evidence shows mismatches for timeout omission, cancellation results, list ordering/multiplicity and missing-record errors. Oracle risks in the candidate suite further limit the green-suite claim, and invalid-config remains unknown. This is a scoped evidence review, not release approval."
+  }
+}
