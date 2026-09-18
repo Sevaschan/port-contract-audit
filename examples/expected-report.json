@@ -1,0 +1,291 @@
+{
+  "schemaVersion": 1,
+  "kind": "port-contract-audit",
+  "scope": {
+    "baseline": "a17",
+    "candidate": "b28",
+    "surfaces": [
+      "JSON adapter",
+      "request tool lifecycle",
+      "list output"
+    ],
+    "excluded": [
+      "Authentication",
+      "Persistence",
+      "Real tools",
+      "Other platforms",
+      "FFI ownership"
+    ]
+  },
+  "execution": {
+    "mode": "analysis-only",
+    "commands": []
+  },
+  "evidence": [
+    {
+      "id": "C1",
+      "kind": "contract",
+      "source": "api-contract@a17 §2",
+      "snapshot": "a17",
+      "summary": "Omitted timeout inherits the session default; explicit null disables it."
+    },
+    {
+      "id": "C2",
+      "kind": "contract",
+      "source": "event-protocol@a17 §4",
+      "snapshot": "a17",
+      "summary": "Exactly one later result per emitted call, correlated by request and call; one terminal done after all results per request."
+    },
+    {
+      "id": "C3",
+      "kind": "contract",
+      "source": "iterator-fixture@a17",
+      "snapshot": "a17",
+      "summary": "Insertion order and duplicate list items are observable."
+    },
+    {
+      "id": "C4",
+      "kind": "contract",
+      "source": "behavior-note@a17",
+      "snapshot": "a17",
+      "summary": "Missing record returns NOT_FOUND with its ID."
+    },
+    {
+      "id": "O1",
+      "kind": "baseline-observation",
+      "source": "packet O1",
+      "snapshot": "a17",
+      "summary": "Omitted timeout resolves to 1200 ms."
+    },
+    {
+      "id": "O2",
+      "kind": "baseline-observation",
+      "source": "packet O2",
+      "snapshot": "a17",
+      "summary": "call(t1), cancelled result(t1), done for r1."
+    },
+    {
+      "id": "O3",
+      "kind": "baseline-observation",
+      "source": "packet O3",
+      "snapshot": "a17",
+      "summary": "List is oak,pine,oak."
+    },
+    {
+      "id": "O4",
+      "kind": "baseline-observation",
+      "source": "packet O4",
+      "snapshot": "a17",
+      "summary": "NOT_FOUND error with id x."
+    },
+    {
+      "id": "N1",
+      "kind": "candidate-observation",
+      "source": "packet N1",
+      "snapshot": "b28",
+      "summary": "Omitted timeout resolves to null."
+    },
+    {
+      "id": "N2",
+      "kind": "candidate-observation",
+      "source": "packet N2",
+      "snapshot": "b28",
+      "summary": "call(t1), done for r1; no result."
+    },
+    {
+      "id": "N3",
+      "kind": "candidate-observation",
+      "source": "packet N3",
+      "snapshot": "b28",
+      "summary": "List is pine,oak."
+    },
+    {
+      "id": "N4",
+      "kind": "candidate-observation",
+      "source": "packet N4",
+      "snapshot": "b28",
+      "summary": "Success with value null."
+    },
+    {
+      "id": "N5",
+      "kind": "candidate-observation",
+      "source": "packet N5",
+      "snapshot": "b27",
+      "summary": "Invalid-config exit 0; stale candidate and no baseline contract."
+    },
+    {
+      "id": "T1",
+      "kind": "test-report",
+      "source": "packet T1",
+      "snapshot": "b28",
+      "summary": "420 passed, expected snapshots changed with the implementation."
+    },
+    {
+      "id": "T2",
+      "kind": "test-report",
+      "source": "packet T2",
+      "snapshot": "b28",
+      "summary": "sort(unique(values)) masks ordering and multiplicity differences."
+    },
+    {
+      "id": "T3",
+      "kind": "test-report",
+      "source": "packet T3",
+      "snapshot": "b28",
+      "summary": "Comparator removes error tool_result events."
+    },
+    {
+      "id": "T4",
+      "kind": "test-report",
+      "source": "packet T4",
+      "snapshot": "b28",
+      "summary": "Timeout expectations generated from the candidate output."
+    },
+    {
+      "id": "A1",
+      "kind": "approval",
+      "source": "UX-42",
+      "snapshot": null,
+      "summary": "Only omitted debugLabel may change to null."
+    },
+    {
+      "id": "A2",
+      "kind": "comment",
+      "source": "packet A2",
+      "snapshot": null,
+      "summary": "Returning Option is idiomatic; no product approval."
+    },
+    {
+      "id": "P1",
+      "kind": "performance",
+      "source": "packet P1",
+      "snapshot": null,
+      "summary": "50 synthetic happy path requests on same machine: medians 85 ms and 31 ms; cancellation not measured."
+    }
+  ],
+  "checks": [
+    {
+      "id": "timeout",
+      "surface": "JSON timeout default",
+      "contract": "Preserve omitted versus explicit null.",
+      "baseline": "1200 ms with session default 1200",
+      "candidate": "null",
+      "status": "mismatch",
+      "evidenceIds": [
+        "C1",
+        "O1",
+        "N1"
+      ],
+      "approvalIds": []
+    },
+    {
+      "id": "cancel",
+      "surface": "Per-request tool lifecycle",
+      "contract": "Every emitted call has one later result before terminal done.",
+      "baseline": "call, cancellation result, done",
+      "candidate": "call, done without result",
+      "status": "mismatch",
+      "evidenceIds": [
+        "C2",
+        "O2",
+        "N2"
+      ],
+      "approvalIds": []
+    },
+    {
+      "id": "list",
+      "surface": "List ordering and multiplicity",
+      "contract": "Retain insertion order and every duplicate.",
+      "baseline": "oak,pine,oak",
+      "candidate": "pine,oak",
+      "status": "mismatch",
+      "evidenceIds": [
+        "C3",
+        "O3",
+        "N3"
+      ],
+      "approvalIds": []
+    },
+    {
+      "id": "missing",
+      "surface": "Missing-record error",
+      "contract": "Return structured NOT_FOUND, not successful null.",
+      "baseline": "error NOT_FOUND id x",
+      "candidate": "success value null",
+      "status": "mismatch",
+      "evidenceIds": [
+        "C4",
+        "O4",
+        "N4"
+      ],
+      "approvalIds": []
+    },
+    {
+      "id": "config",
+      "surface": "Invalid configuration exit behavior",
+      "contract": "Unknown: obtain old contract or independent old observation.",
+      "baseline": null,
+      "candidate": null,
+      "status": "unknown",
+      "evidenceIds": [
+        "N5"
+      ],
+      "approvalIds": []
+    }
+  ],
+  "oracleRisks": [
+    {
+      "id": "snapshot",
+      "evidenceIds": [
+        "T1",
+        "T4"
+      ],
+      "reason": "Candidate-generated expectations are not an independent parity oracle."
+    },
+    {
+      "id": "normalization",
+      "evidenceIds": [
+        "C2",
+        "C3",
+        "T2",
+        "T3"
+      ],
+      "reason": "Sorting, deduplication and dropping errors erase observable behavior."
+    }
+  ],
+  "nextTests": [
+    {
+      "id": "compare",
+      "checkIds": [
+        "timeout",
+        "list",
+        "missing"
+      ],
+      "action": "Replay supplied fixtures against fixed candidate and independent baseline.",
+      "command": null,
+      "expected": "Preserve presence, exact list sequence and structured error; scope UX-42 to debugLabel only."
+    },
+    {
+      "id": "trace",
+      "checkIds": [
+        "cancel"
+      ],
+      "action": "Check cancellation and concurrent request traces without removing error results.",
+      "command": null,
+      "expected": "One later result for each request/call pair and one done after all results; no global inter-request ordering."
+    },
+    {
+      "id": "config",
+      "checkIds": [
+        "config"
+      ],
+      "action": "Obtain the old invalid-config contract and a b28 observation for the same fixture.",
+      "command": null,
+      "expected": "Resolve the unknown without treating b27 as b28."
+    }
+  ],
+  "verdict": {
+    "status": "incompatible",
+    "reason": "Four unapproved observable contract mismatches; stale config evidence remains unknown. Green rewritten tests and faster happy paths do not establish parity."
+  }
+}
