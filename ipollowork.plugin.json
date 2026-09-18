@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 2,
+  "id": "port-contract-audit",
+  "name": "Port Contract Audit",
+  "description": "Review observable behavior across AI-assisted language migrations using independent contracts, scoped approvals and evidence-linked reports.",
+  "category": "Development & Testing",
+  "source": {
+    "format": "ipollowork-extension-manifest",
+    "origin": "local",
+    "trusted": false,
+    "reference": "https://github.com/Sevaschan/port-contract-audit"
+  },
+  "composer": {
+    "prompt": "Use port-contract-audit and its report-format reference to review this migration. Write port-contract-report.json and port-contract-report.md from supplied evidence; do not execute tests unless requested."
+  },
+  "package": {
+    "version": "1.0.0",
+    "publisher": {
+      "id": "sevaschan",
+      "name": "Sevaschan"
+    },
+    "updateId": "sevaschan/port-contract-audit",
+    "compatibility": {
+      "ipollowork": "0.50.12"
+    }
+  },
+  "resources": [
+    {
+      "type": "skill",
+      "id": "port-contract-audit",
+      "label": "Port Contract Audit",
+      "description": "Review behavior at language and runtime migration boundaries.",
+      "path": "skills/port-contract-audit",
+      "required": true
+    }
+  ],
+  "localization": {
+    "defaultLocale": "en",
+    "translations": {
+      "zh-CN": {
+        "name": "迁移行为核对",
+        "description": "核对 AI 辅助跨语言迁移的可观察行为，生成关联约定、证据和获批变更的报告。",
+        "category": "开发与测试",
+        "composer": {
+          "prompt": "使用 port-contract-audit 技能及其 report-format 参考文件审阅迁移，基于已有证据生成 JSON 和 Markdown 报告。"
+        },
+        "resources": {
+          "port-contract-audit": {
+            "label": "迁移行为核对",
+            "description": "审阅语言和运行时迁移边界的行为。"
+          }
+        }
+      }
+    }
+  }
+}
